@@ -1,78 +1,13 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Transform: "AWS::Serverless-2016-10-31"
+Transform: AWS::Serverless-2016-10-31
 Description: "Digital Identity serverless frontend firebreak 🔥"
 
 Resources:
   FirebreakApiGatewayApi:
-    Type: AWS::ApiGateway::RestApi
+    Type: AWS::Serverless::Api
     Properties:
-      Description: My API gateway for serverless frontend.
-
-
-  FirebreakApiGatewayResource:
-    Type: AWS::ApiGateway::Resource
-    Properties:
-      ParentId: !GetAtt FirebreakApiGatewayApi.RootResourceId
-      RestApiId: !Ref FirebreakApiGatewayApi
-      PathPart: '{proxy+}'
-
-  FirebreakApiGatewayMethod:
-    Type: AWS::ApiGateway::Method
-    Properties:
-      AuthorizationType: NONE
-      HttpMethod: ANY
-      Integration:
-        IntegrationHttpMethod: POST
-        Type: AWS_PROXY
-        IntegrationResponses:
-          - StatusCode: "200"
-        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${FirebreakServerlessFrontend.Arn}/invocations'
-      ResourceId: !Ref FirebreakApiGatewayResource
-      RestApiId: !Ref FirebreakApiGatewayApi
-
-  FirebreakApiGatewayModel:
-    Type: AWS::ApiGateway::Model
-    Properties:
-      ContentType: 'application/json'
-      RestApiId: !Ref FirebreakApiGatewayApi
-      Schema: {}
-
-  FirebreakApiGatewayStage:
-    Type: AWS::ApiGateway::Stage
-    Properties:
-      DeploymentId: !Ref FirebreakApiGatewayDeployment
-      Description: Lambda API Stage v0
-      RestApiId: !Ref FirebreakApiGatewayApi
-      StageName: 'v0'
-
-  FirebreakApiGatewayDeployment:
-    Type: AWS::ApiGateway::Deployment
-    Properties:
-      Description: Lambda API Deployment
-      RestApiId: !Ref FirebreakApiGatewayApi
-
-  FirebreakApiGatewayIamRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Sid: ''
-            Effect: 'Allow'
-            Principal:
-              Service:
-                - 'apigateway.amazonaws.com'
-            Action:
-              - 'sts:AssumeRole'
-      Path: '/'
-      Policies:
-        - PolicyName: LambdaAccess
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Effect: 'Allow'
-                Action: 'lambda:*'
-                Resource: !GetAtt FirebreakServerlessFrontend.Arn
+      StageName: prod
+      BinaryMediaTypes: ['*/*']
 
   FirebreakServerlessFrontend:
     Type: AWS::Serverless::Function
@@ -80,43 +15,56 @@ Resources:
       CodeUri: ./lambdas/versionOne
       Handler: app.handler
       Runtime: nodejs16.x
+      Events:
+        ProxyApiRoot:
+          Type: Api
+          Properties:
+            RestApiId: !Ref FirebreakApiGatewayApi
+            Path: /
+            Method: ANY
+        ProxyApiGreedy:
+          Type: Api
+          Properties:
+            RestApiId: !Ref FirebreakApiGatewayApi
+            Path: /{proxy+}
+            Method: ANY
       Policies:
         - AWSLambdaBasicExecutionRole
-      Role: !GetAtt FirebreakLambdaIamRole.Arn
+      # Role: !GetAtt FirebreakLambdaIamRole.Arn
 
-  lambdaApiGatewayInvoke:
-    Type: "AWS::Lambda::Permission"
-    Properties:
-      Action: "lambda:InvokeFunction"
-      FunctionName: !GetAtt "FirebreakServerlessFrontend.Arn"
-      Principal: "apigateway.amazonaws.com"
-      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${FirebreakApiGatewayApi}/*/*/*"
+  # lambdaApiGatewayInvoke:
+  #   Type: "AWS::Lambda::Permission"
+  #   Properties:
+  #     Action: "lambda:InvokeFunction"
+  #     FunctionName: !GetAtt "FirebreakServerlessFrontend.Arn"
+  #     Principal: "apigateway.amazonaws.com"
+  #     SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${FirebreakApiGatewayApi}/*/*/*"
 
-  FirebreakLambdaIamRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: 'Allow'
-            Principal:
-              Service:
-                - 'lambda.amazonaws.com'
-            Action:
-              - 'sts:AssumeRole'
-      Path: '/'
-      Policies:
-        - PolicyDocument:
-            PolicyName: "lambda"
-            Version: "2012-10-17"
-            Statement:
-              - Action:
-                  - "logs:CreateLogGroup"
-                  - "logs:CreateLogStream"
-                  - "logs:PutLogEvents"
-                Effect: "Allow"
-                Resource:
-                  - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${FirebreakServerlessFrontend}:*"
+  # FirebreakLambdaIamRole:
+  #   Type: AWS::IAM::Role
+  #   Properties:
+  #     AssumeRolePolicyDocument:
+  #       Version: '2012-10-17'
+  #       Statement:
+  #         - Effect: 'Allow'
+  #           Principal:
+  #             Service:
+  #               - 'lambda.amazonaws.com'
+  #           Action:
+  #             - 'sts:AssumeRole'
+  #     Path: '/'
+  #     Policies:
+  #       - PolicyDocument:
+  #           PolicyName: "lambda"
+  #           Version: "2012-10-17"
+  #           Statement:
+  #             - Action:
+  #                 - "logs:CreateLogGroup"
+  #                 - "logs:CreateLogStream"
+  #                 - "logs:PutLogEvents"
+  #               Effect: "Allow"
+  #               Resource:
+  #                 - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${FirebreakServerlessFrontend}:*"
 
   FirebreakServerlessFrontendLogGroup:
     Type: AWS::Logs::LogGroup
