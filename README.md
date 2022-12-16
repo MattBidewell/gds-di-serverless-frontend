@@ -3,7 +3,7 @@ Firebreak project of a serverless frontend in Digital Identity.
 
 ## Version One
 
-Version one is a simple hmpo app that will return a simple ui with a Get and Post request.
+Version one is a simple hmpo app that will return a ui with a Get and Post request.
 There are two pages, one input a text value and one to display that.
 
 ## Version Two
@@ -16,4 +16,3 @@ adds more pages
 
 ## Version four
 
---
