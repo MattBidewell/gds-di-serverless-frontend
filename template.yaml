@@ -3,11 +3,6 @@ Transform: AWS::Serverless-2016-10-31
 Description: "Digital Identity serverless frontend firebreak 🔥"
 
 Resources:
-  FirebreakApiGatewayApi:
-    Type: AWS::Serverless::Api
-    Properties:
-      StageName: prod
-      BinaryMediaTypes: ['*/*']
 
   FirebreakServerlessFrontend:
     Type: AWS::Serverless::Function
@@ -15,56 +10,39 @@ Resources:
       CodeUri: ./lambdas/versionOne
       Handler: app.handler
       Runtime: nodejs16.x
-      Events:
-        ProxyApiRoot:
-          Type: Api
-          Properties:
-            RestApiId: !Ref FirebreakApiGatewayApi
-            Path: /
-            Method: ANY
-        ProxyApiGreedy:
-          Type: Api
-          Properties:
-            RestApiId: !Ref FirebreakApiGatewayApi
-            Path: /{proxy+}
-            Method: ANY
       Policies:
         - AWSLambdaBasicExecutionRole
-      # Role: !GetAtt FirebreakLambdaIamRole.Arn
 
-  # lambdaApiGatewayInvoke:
-  #   Type: "AWS::Lambda::Permission"
-  #   Properties:
-  #     Action: "lambda:InvokeFunction"
-  #     FunctionName: !GetAtt "FirebreakServerlessFrontend.Arn"
-  #     Principal: "apigateway.amazonaws.com"
-  #     SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${FirebreakApiGatewayApi}/*/*/*"
-
-  # FirebreakLambdaIamRole:
-  #   Type: AWS::IAM::Role
-  #   Properties:
-  #     AssumeRolePolicyDocument:
-  #       Version: '2012-10-17'
-  #       Statement:
-  #         - Effect: 'Allow'
-  #           Principal:
-  #             Service:
-  #               - 'lambda.amazonaws.com'
-  #           Action:
-  #             - 'sts:AssumeRole'
-  #     Path: '/'
-  #     Policies:
-  #       - PolicyDocument:
-  #           PolicyName: "lambda"
-  #           Version: "2012-10-17"
-  #           Statement:
-  #             - Action:
-  #                 - "logs:CreateLogGroup"
-  #                 - "logs:CreateLogStream"
-  #                 - "logs:PutLogEvents"
-  #               Effect: "Allow"
-  #               Resource:
-  #                 - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${FirebreakServerlessFrontend}:*"
+  # API Gateway
+  FirebreakApiGatewayApi:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: FirebreakApiGatewayApi
+  ServerApiResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref FirebreakApiGatewayApi
+      ParentId: !GetAtt FirebreakApiGatewayApi.RootResourceId
+      PathPart: '{proxy+}'
+  ServerApiMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      HttpMethod: ANY
+      ResourceId: !Ref ServerApiResource
+      RestApiId: !Ref FirebreakApiGatewayApi
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: ANY
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${FirebreakServerlessFrontend.Arn}/invocations'
+      AuthorizationType: NONE
+      RequestParameters:
+        method.request.path.proxy: true
+  ServerApiDeployment:
+    Type: AWS::ApiGateway::Deployment
+    Properties:
+      RestApiId: !Ref FirebreakApiGatewayApi
+      StageName: Prod
+    DependsOn: ServerApiMethod
 
   FirebreakServerlessFrontendLogGroup:
     Type: AWS::Logs::LogGroup
@@ -76,4 +54,4 @@ Resources:
 Outputs:
   ServerlessUrl:
     Description: Url to invoke the serverless Frontend
-    Value: !Sub https://${FirebreakApiGatewayApi}.execute-api.${AWS::Region}.amazonaws.com/
+    Value: !Sub https://${FirebreakApiGatewayApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/
