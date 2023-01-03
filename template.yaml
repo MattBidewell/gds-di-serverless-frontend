@@ -10,6 +10,7 @@ Resources:
       CodeUri: ./lambdas/versionOne
       Handler: app.handler
       Runtime: nodejs16.x
+      Timeout: 300
       Policies:
         - AWSLambdaBasicExecutionRole
       Events:
@@ -33,4 +34,4 @@ Resources:
 Outputs:
   ServerlessUrl:
     Description: Url to invoke the serverless Frontend
-    Value: !Sub https://${ExpressApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/
+    Value: !Sub https://${ExpressApi}.execute-api.${AWS::Region}.amazonaws.com/
