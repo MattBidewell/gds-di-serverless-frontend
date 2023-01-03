@@ -1,0 +1,33 @@
+{
+  "name": "versionone",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "node app.js",
+    "postinstall": "npm run build",
+    "build": "npm run build:sass && npm run build:js",
+    "build:sass": "mkdir -p public/stylesheets; node-sass assets/stylesheets/app.scss --output-style compressed public/stylesheets/application.css",
+    "build:js": "mkdir -p public/javascripts; uglifyjs node_modules/govuk-frontend/govuk/all.js node_modules/hmpo-components/all.js assets/javascripts/*.js -o public/javascripts/application.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@vendia/serverless-express": "^4.10.1",
+    "connect-dynamodb": "^2.0.6",
+    "express": "^4.18.2",
+    "express-session": "^1.17.3",
+    "govuk-frontend": "^4.4.0",
+    "hmpo-app": "^2.4.0",
+    "hmpo-components": "^5.6.0",
+    "hmpo-config": "^2.2.1",
+    "hmpo-form-wizard": "^12.0.6",
+    "hmpo-i18n": "^5.0.2",
+    "hmpo-logger": "^6.1.1",
+    "node-sass": "^8.0.0",
+    "nunjucks": "^3.2.3",
+    "uglify-js": "^3.17.4"
+  }
+}
