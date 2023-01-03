@@ -8,12 +8,6 @@ const sessionConfig = {
   secret: "MySuperSecret",
 };
 
-// const loggerConfig = {
-//   console: true,
-//   consoleJSON: true,
-//   app: true,
-// };
-
 const PORT = 3000;
 
 const { app, router } = setup({
@@ -43,18 +37,5 @@ const wizard = new HmpoFormWizard(steps, fields, {
 });
 
 router.use("/test", wizard)
-
-// router.post("/*", (req, res)  => {
-//   console.log(req);
-//   console.log("progress! 3");
-//   res.json({"test": true})
-// });
-
-// router.get("/*", (req, res)  => {
-//   console.log(req);
-//   console.log("progress! 4");
-//   res.json({"test": true})
-// });
-
 
 module.exports.handler = serverlessExpress({app});
