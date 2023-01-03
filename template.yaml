@@ -12,37 +12,16 @@ Resources:
       Runtime: nodejs16.x
       Policies:
         - AWSLambdaBasicExecutionRole
+      Events:
+        ProxyApiRoot:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref ExpressApi
+
 
   # API Gateway
-  FirebreakApiGatewayApi:
-    Type: AWS::ApiGateway::RestApi
-    Properties:
-      Name: FirebreakApiGatewayApi
-  ServerApiResource:
-    Type: AWS::ApiGateway::Resource
-    Properties:
-      RestApiId: !Ref FirebreakApiGatewayApi
-      ParentId: !GetAtt FirebreakApiGatewayApi.RootResourceId
-      PathPart: '{proxy+}'
-  ServerApiMethod:
-    Type: AWS::ApiGateway::Method
-    Properties:
-      HttpMethod: ANY
-      ResourceId: !Ref ServerApiResource
-      RestApiId: !Ref FirebreakApiGatewayApi
-      Integration:
-        Type: AWS_PROXY
-        IntegrationHttpMethod: ANY
-        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${FirebreakServerlessFrontend.Arn}/invocations'
-      AuthorizationType: NONE
-      RequestParameters:
-        method.request.path.proxy: true
-  ServerApiDeployment:
-    Type: AWS::ApiGateway::Deployment
-    Properties:
-      RestApiId: !Ref FirebreakApiGatewayApi
-      StageName: Prod
-    DependsOn: ServerApiMethod
+  ExpressApi:
+    Type: AWS::Serverless::HttpApi
 
   FirebreakServerlessFrontendLogGroup:
     Type: AWS::Logs::LogGroup
@@ -54,4 +33,4 @@ Resources:
 Outputs:
   ServerlessUrl:
     Description: Url to invoke the serverless Frontend
-    Value: !Sub https://${FirebreakApiGatewayApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/
+    Value: !Sub https://${ExpressApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/
